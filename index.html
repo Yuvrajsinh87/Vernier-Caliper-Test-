@@ -1,1 +1,266 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>વર્નિયર કેલિપર રીડિંગ ઓનલાઈન ટેસ્ટ (10 પ્રશ્નો)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; margin: 0; padding: 15px; }
+        .container { max-width: 750px; background: white; margin: 0 auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1a252f; margin-bottom: 5px; font-size: 24px; }
+        .author-tag { text-align: center; font-size: 14px; font-weight: bold; color: #0d6efd; background: #e7f1ff; padding: 10px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #b6d4fe; }
+        .form-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #333; }
+        input[type="text"], input[type="tel"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        
+        .question-card { background: #ffffff; padding: 18px; margin-bottom: 20px; border: 1px solid #dee2e6; border-left: 6px solid #0d6efd; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .question-title { font-weight: bold; font-size: 1.1em; color: #2c3e50; margin-bottom: 12px; }
+        
+        /* Vernier SVG Box */
+        .vernier-box { text-align: center; background: #1e293b; padding: 15px; border-radius: 8px; margin: 12px 0; overflow-x: auto; }
+        .vernier-svg { width: 100%; max-width: 580px; height: auto; display: block; margin: 0 auto; }
+        
+        .submit-btn { background: #198754; color: white; border: none; padding: 14px 20px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; }
+        .submit-btn:hover { background: #157347; }
+        
+        /* Answer Key Styling */
+        .review-card { background: #ffffff; padding: 18px; margin-bottom: 20px; border-radius: 8px; border: 2px solid #ccc; text-align: left; }
+        .review-card.correct { border-color: #198754; border-left: 8px solid #198754; }
+        .review-card.incorrect { border-color: #dc3545; border-left: 8px solid #dc3545; }
+        
+        .ans-info { font-size: 16px; margin-top: 8px; padding: 8px; border-radius: 5px; }
+        .ans-info.correct-bg { background-color: #d1e7dd; color: #0f5132; }
+        .ans-info.incorrect-bg { background-color: #f8d7da; color: #842029; }
+
+        #quiz-area, #result-area { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>વર્નિયર કેલિપર રીડિંગ ઓનલાઈન ટેસ્ટ</h2>
+    <div class="author-tag">Test Created by Yuvrajsinh Kosamia - ITI Ankleshwar (Mechanic Diesel)</div>
+
+    <!-- ૧. રજીસ્ટ્રેશન ફોર્મ -->
+    <div id="registration">
+        <div class="form-group">
+            <label>તાલીમાર્થીનું નામ:</label>
+            <input type="text" id="traineeName" placeholder="તમારું પૂરૂં નામ લખો" required>
+        </div>
+        <div class="form-group">
+            <label>મોબાઈલ નંબર:</label>
+            <input type="tel" id="traineeMobile" placeholder="10 અંકનો મોબાઈલ નંબર" required>
+        </div>
+        <button class="submit-btn" onclick="startQuiz()">ટેસ્ટ શરૂ કરો</button>
+    </div>
+
+    <!-- ૨. ક્વિઝ એરિયા (૧૦ પ્રશ્નો) -->
+    <div id="quiz-area">
+        <form id="quizForm">
+            <div id="questionsContainer"></div>
+            <button type="button" class="submit-btn" onclick="submitQuiz()">આખી ટેસ્ટ સબમિટ કરો</button>
+        </form>
+    </div>
+
+    <!-- ૩. રિઝલ્ટ અને આન્સર કી એરિયા -->
+    <div id="result-area" style="text-align: center;">
+        <h3 style="color: #198754; font-size: 24px; margin-bottom: 5px;">તમારી ટેસ્ટ સફળતાપૂર્વક સબમિટ થઈ ગઈ છે!</h3>
+        <p id="scoreText" style="font-size: 22px; font-weight: bold; color: #1a252f; background: #e9ecef; padding: 12px; border-radius: 8px;"></p>
+        
+        <h4 style="text-align: left; color: #0d6efd; margin-top: 25px; font-size: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px;">તમારી આન્સર કી (Answer Key):</h4>
+        <div id="answerKeyContainer"></div>
+    </div>
+</div>
+
+<script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzdAg0vv-sWwcEfSQytap-L5L0sioEHND-EdH3ssdtHhN5IDaghifwcqJMkY51F92bTrw/exec';
+    
+    let traineeData = {};
+    let selectedQuestions = [];
+
+    // ૧૦૦% એક્યુરેટ વર્નિયર કેલિપર SVG જનરેટર (L.C. = 0.02 mm)
+    function generateClearVernierSVG(totalValue) {
+        let val = parseFloat(totalValue);
+        let mainScale = Math.floor(val);
+        let vernierScale = Math.round((val - mainScale) * 50); // 0.02 mm લીસ્ટ કાઉન્ટ (0 થી 50)
+
+        let pxPerMM = 10; // 1 mm = 10px
+        let startX = 60;
+        let vernierZeroX = startX + (val * pxPerMM);
+
+        // Main Scale Lines
+        let mainScaleLines = '';
+        for (let i = 0; i <= 50; i++) {
+            let x = startX + (i * pxPerMM);
+            let isTen = (i % 10 === 0);
+            let isFive = (i % 5 === 0);
+            let h = isTen ? 30 : (isFive ? 22 : 14);
+            
+            mainScaleLines += `<line x1="${x}" y1="65" x2="${x}" y2="${65 - h}" stroke="#ffffff" stroke-width="${isTen ? 2.2 : (isFive ? 1.8 : 1.2)}"/>`;
+            if (isTen) {
+                mainScaleLines += `<text x="${x}" y="${65 - 34}" font-size="12" font-weight="bold" text-anchor="middle" fill="#38bdf8">${i}</text>`;
+            }
+        }
+
+        // Vernier Scale Lines (0.02 mm LC -> 50 Divisions = 49 mm)
+        let vernierLines = '';
+        for (let i = 0; i <= 50; i++) {
+            let vx = vernierZeroX + (i * 0.98 * pxPerMM); // 49mm / 50 = 0.98mm per division
+            let isTen = (i % 10 === 0);
+            let isFive = (i % 5 === 0);
+            let h = isTen ? 25 : (isFive ? 18 : 12);
+
+            let isMatched = (i === vernierScale);
+            let lineColor = isMatched ? "#f43f5e" : "#ffffff";
+            let lineWidth = isMatched ? 2.5 : (isTen ? 2 : 1.2);
+
+            vernierLines += `<line x1="${vx}" y1="75" x2="${vx}" y2="${75 + h}" stroke="${lineColor}" stroke-width="${lineWidth}"/>`;
+            if (isTen) {
+                vernierLines += `<text x="${vx}" y="${75 + 38}" font-size="11" font-weight="bold" text-anchor="middle" fill="${isMatched ? '#f43f5e' : '#4ade80'}">${i/10}</text>`;
+            }
+        }
+
+        return `
+        <div class="vernier-box">
+            <svg class="vernier-svg" viewBox="0 0 580 160" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#0f172a" rx="6"/>
+                
+                <!-- Main Beam Bar -->
+                <rect x="20" y="20" width="540" height="50" fill="#334155" stroke="#64748b" stroke-width="2"/>
+                ${mainScaleLines}
+                
+                <!-- Vernier Slider Plate -->
+                <rect x="${vernierZeroX - 20}" y="70" width="510" height="65" fill="#1e293b" stroke="#94a3b8" stroke-width="2" rx="4"/>
+                
+                <!-- Vernier Zero Indicator Line -->
+                <line x1="${vernierZeroX}" y1="65" x2="${vernierZeroX}" y2="75" stroke="#f43f5e" stroke-width="3"/>
+                
+                <!-- Vernier Scale Lines -->
+                ${vernierLines}
+            </svg>
+        </div>`;
+    }
+
+    // ૧૦ રેન્ડમ પ્રશ્નો જનરેટ કરવા માટે
+    function generateQuestions() {
+        let questions = [];
+        for (let i = 0; i < 40; i++) {
+            let mainScale = Math.floor(Math.random() * 35); // 0 થી 35 mm
+            let vernierDiv = Math.floor(Math.random() * 50); // 0 થી 49 (L.C. 0.02 mm)
+            
+            let totalReading = (mainScale + (vernierDiv * 0.02)).toFixed(2);
+            
+            questions.push({
+                correctAnswer: totalReading
+            });
+        }
+        return questions.sort(() => 0.5 - Math.random()).slice(0, 10);
+    }
+
+    function startQuiz() {
+        const name = document.getElementById('traineeName').value.trim();
+        const mobile = document.getElementById('traineeMobile').value.trim();
+
+        if (name === "" || mobile.length !== 10) {
+            alert("કૃપા કરીને તમારું પૂરું નામ અને ૧૦ અંકનો મોબાઈલ નંબર દાખલ કરો.");
+            return;
+        }
+
+        traineeData.name = name;
+        traineeData.mobile = mobile;
+
+        document.getElementById('registration').style.display = 'none';
+        document.getElementById('quiz-area').style.display = 'block';
+
+        selectedQuestions = generateQuestions();
+
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '';
+
+        selectedQuestions.forEach((q, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-card';
+            
+            const svgCode = generateClearVernierSVG(q.correctAnswer);
+            
+            qDiv.innerHTML = `
+                <div class="question-title">પ્રશ્ન ${index + 1}: આકૃતિમાં દર્શાવેલ વર્નિયર કેલિપરનું સાચું રીડિંગ શોધીને લખો (mm માં)</div>
+                ${svgCode}
+                <div class="form-group">
+                    <label>તમારો જવાબ (mm):</label>
+                    <input type="number" step="0.02" id="ans_${index}" placeholder="દા.ત. 15.24" required>
+                </div>
+            `;
+            container.appendChild(qDiv);
+        });
+        window.scrollTo(0, 0);
+    }
+
+    function submitQuiz() {
+        let score = 0;
+        let userAnswers = [];
+        let allAnswered = true;
+
+        for (let i = 0; i < selectedQuestions.length; i++) {
+            const inputVal = document.getElementById(`ans_${i}`).value.trim();
+            if (inputVal === "") {
+                allAnswered = false;
+                break;
+            }
+            userAnswers.push(parseFloat(inputVal).toFixed(2));
+        }
+
+        if (!allAnswered) {
+            alert("કૃપા કરીને બધા ૧૦ પ્રશ્નોના જવાબ પૂર્ણ કરો.");
+            return;
+        }
+
+        selectedQuestions.forEach((q, index) => {
+            if (userAnswers[index] === q.correctAnswer) {
+                score++;
+            }
+        });
+
+        traineeData.score = `${score} / 10`;
+
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('result-area').style.display = 'block';
+        document.getElementById('scoreText').innerText = `${traineeData.name}, તમારો કુલ સ્કોર: ${traineeData.score}`;
+
+        const answerKeyContainer = document.getElementById('answerKeyContainer');
+        answerKeyContainer.innerHTML = '';
+
+        selectedQuestions.forEach((q, index) => {
+            const isCorrect = (userAnswers[index] === q.correctAnswer);
+            const reviewCard = document.createElement('div');
+            reviewCard.className = `review-card ${isCorrect ? 'correct' : 'incorrect'}`;
+            
+            const svgCode = generateClearVernierSVG(q.correctAnswer);
+
+            reviewCard.innerHTML = `
+                <div class="question-title" style="margin-bottom: 5px;">
+                    પ્રશ્ન ${index + 1}: ${isCorrect ? '<span style="color:#198754;">✔️ સાચો જવાબ</span>' : '<span style="color:#dc3545;">❌ ખોટો જવાબ</span>'}
+                </div>
+                ${svgCode}
+                <div class="ans-info ${isCorrect ? 'correct-bg' : 'incorrect-bg'}">
+                    <strong>તમે આપેલો જવાબ:</strong> ${userAnswers[index]} mm<br>
+                    <strong>સાચું રીડિંગ:</strong> ${q.correctAnswer} mm
+                </div>
+            `;
+            answerKeyContainer.appendChild(reviewCard);
+        });
+
+        window.scrollTo(0, 0);
+
+        fetch(scriptURL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(traineeData)
+        }).catch(error => console.error('Error!', error.message));
+    }
+</script>
+
+</body>
+</html>
 
