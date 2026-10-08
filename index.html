@@ -16,7 +16,7 @@
         .question-card { background: #ffffff; padding: 18px; margin-bottom: 20px; border: 1px solid #dee2e6; border-left: 6px solid #0d6efd; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .question-title { font-weight: bold; font-size: 1.1em; color: #2c3e50; margin-bottom: 12px; }
         
-        /* Fixed Clear Box Styling */
+        /* High Contrast Box */
         .vernier-box { text-align: center; background: #0f172a; padding: 15px; border-radius: 8px; margin: 12px 0; overflow-x: auto; }
         .vernier-svg { width: 100%; max-width: 750px; height: auto; display: block; margin: 0 auto; }
         
@@ -82,17 +82,15 @@
     let traineeData = {};
     let selectedQuestions = [];
 
-    // બગ-ફ્રી અને ૧૦૦% વિઝિબલ SVG જનરેટર
-    function generateFixedVernierSVG(totalValue) {
-        let val = parseFloat(totalValue);
-        let mainScale = Math.floor(val);
-        let vernierDiv = Math.round((val - mainScale) * 50); // 0 થી 49 (LC = 0.02mm)
+    // ૧૦૦% ગેરંટી સાથે બંને લાઈન (Red & Green) દોરતું SVG જનરેટર
+    function generateGuaranteedVernierSVG(mainScale, vernierDiv) {
+        let val = mainScale + (vernierDiv * 0.02);
 
         let scaleFactor = 13; // 1 mm = 13px
         let startX = 50;
         let vernierZeroX = startX + (val * scaleFactor);
 
-        // Main Scale Lines
+        // ૧. મેઈન સ્કેલ કાપા
         let mainScaleLines = '';
         for (let i = 0; i <= 45; i++) {
             let x = startX + (i * scaleFactor);
@@ -106,9 +104,9 @@
             }
         }
 
-        // Vernier Scale Lines
+        // ૨. વર્નિયર સ્કેલ કાપા અને મેચિંગ લાઈન
         let vernierLines = '';
-        let matchedX = 0;
+        let matchedX = vernierZeroX + (vernierDiv * 0.98 * scaleFactor); // સીધી જ ચોક્કસ ગણતરી
 
         for (let i = 0; i <= 50; i++) {
             let vx = vernierZeroX + (i * 0.98 * scaleFactor);
@@ -117,12 +115,8 @@
             let h = isTen ? 26 : (isFive ? 18 : 12);
 
             let isCoinciding = (i === vernierDiv);
-            if (isCoinciding) {
-                matchedX = vx;
-            }
-
             let lineColor = isCoinciding ? "#22c55e" : "#fbbf24";
-            let lineWidth = isCoinciding ? 3 : (isTen ? 2 : 1.2);
+            let lineWidth = isCoinciding ? 3.5 : (isTen ? 2 : 1.2);
 
             vernierLines += `<line x1="${vx}" y1="85" x2="${vx}" y2="${85 + h}" stroke="${lineColor}" stroke-width="${lineWidth}"/>`;
             if (isTen) {
@@ -134,10 +128,9 @@
         <div class="vernier-box">
             <div class="legend">
                 <div class="legend-item"><span class="legend-box" style="background:#ef4444;"></span> <span style="color:#f87171;">૧. વર્નિયર ૦ પોઈન્ટર (મેઈન સ્કેલ)</span></div>
-                <div class="legend-item"><span class="legend-box" style="background:#22c55e;"></span> <span style="color:#4ade80;">૨. મેચિંગ કાપો (વર્નિયર ડિવિઝન)</span></div>
+                <div class="legend-item"><span class="legend-box" style="background:#22c55e;"></span> <span style="color:#4ade80;">૨. મેચિંગ કાપો (વર્નિયર ડિવિઝન: ${vernierDiv})</span></div>
             </div>
 
-            <!-- viewBox માં Height 210px રાખી જેથી લખાણ કે કાપા કપાય નહીં -->
             <svg class="vernier-svg" viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg">
                 <rect width="100%" height="100%" fill="#0f172a" rx="6"/>
                 
@@ -148,26 +141,27 @@
                 <!-- Vernier Slider Plate -->
                 <rect x="${vernierZeroX - 20}" y="80" width="660" height="90" fill="#334155" stroke="#94a3b8" stroke-width="2" rx="4"/>
                 
-                <!-- વર્નિયર ૦ (ઝીરો) રેડ ઇન્ડિકેટર લાઈન -->
-                <line x1="${vernierZeroX}" y1="25" x2="${vernierZeroX}" y2="85" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="4,2"/>
+                <!-- ૧. વર્નિયર ૦ રેડ ઇન્ડિકેટર લાઈન -->
+                <line x1="${vernierZeroX}" y1="20" x2="${vernierZeroX}" y2="85" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="4,2"/>
                 <circle cx="${vernierZeroX}" cy="85" r="4.5" fill="#ef4444"/>
                 
                 <!-- Vernier Scale Lines -->
                 ${vernierLines}
                 
-                <!-- મેચિંગ ડિવિઝન ગ્રીન ઇન્ડિકેટર લાઈન -->
-                <line x1="${matchedX}" y1="25" x2="${matchedX}" y2="135" stroke="#22c55e" stroke-width="2" stroke-dasharray="3,3"/>
+                <!-- ૨. મેચિંગ ડિવિઝન ગ્રીન ઇન્ડિકેટર લાઈન (ફરજિયાત રેન્ડર થશે) -->
+                <line x1="${matchedX}" y1="25" x2="${matchedX}" y2="135" stroke="#22c55e" stroke-width="2.5" stroke-dasharray="3,3"/>
                 <circle cx="${matchedX}" cy="75" r="4.5" fill="#22c55e"/>
                 <circle cx="${matchedX}" cy="85" r="4.5" fill="#22c55e"/>
             </svg>
         </div>`;
     }
 
+    // ૧૦ રેન્ડમ પ્રશ્નો (vernierDiv ને ૧ થી ૪૯ સુધી જ રાખ્યા છે જેથી ૧૦૦% અલગ ગ્રીન લાઈન દેખાય)
     function generateQuestions() {
         let questions = [];
         for (let i = 0; i < 40; i++) {
-            let mainScale = Math.floor(Math.random() * 26);
-            let vernierDiv = Math.floor(Math.random() * 50);
+            let mainScale = Math.floor(Math.random() * 25) + 1; // 1 થી 25 mm
+            let vernierDiv = Math.floor(Math.random() * 48) + 1; // 1 થી 48 કાપા (0 ન આવે જેથી ગ્રીન લાઈન લાલ સાથે ઓવરલેપ ન થાય)
             
             let totalReading = (mainScale + (vernierDiv * 0.02)).toFixed(2);
             
@@ -204,7 +198,7 @@
             const qDiv = document.createElement('div');
             qDiv.className = 'question-card';
             
-            const svgCode = generateFixedVernierSVG(q.correctAnswer);
+            const svgCode = generateGuaranteedVernierSVG(q.mainScale, q.vernierDiv);
             
             qDiv.innerHTML = `
                 <div class="question-title">પ્રશ્ન ${index + 1}: આકૃતિમાં દર્શાવેલ વર્નિયર કેલિપરનું સાચું રીડિંગ શોધો (mm માં)</div>
@@ -258,7 +252,7 @@
             const reviewCard = document.createElement('div');
             reviewCard.className = `review-card ${isCorrect ? 'correct' : 'incorrect'}`;
             
-            const svgCode = generateFixedVernierSVG(q.correctAnswer);
+            const svgCode = generateGuaranteedVernierSVG(q.mainScale, q.vernierDiv);
             let vernierValue = (q.vernierDiv * 0.02).toFixed(2);
 
             reviewCard.innerHTML = `
