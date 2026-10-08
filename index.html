@@ -16,13 +16,13 @@
         .question-card { background: #ffffff; padding: 18px; margin-bottom: 20px; border: 1px solid #dee2e6; border-left: 6px solid #0d6efd; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .question-title { font-weight: bold; font-size: 1.1em; color: #2c3e50; margin-bottom: 12px; }
         
-        /* High Contrast Box */
+        /* Fixed Clear Box Styling */
         .vernier-box { text-align: center; background: #0f172a; padding: 15px; border-radius: 8px; margin: 12px 0; overflow-x: auto; }
-        .vernier-svg { width: 100%; max-width: 720px; height: auto; display: block; margin: 0 auto; }
+        .vernier-svg { width: 100%; max-width: 750px; height: auto; display: block; margin: 0 auto; }
         
-        .legend { display: flex; justify-content: center; gap: 20px; font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+        .legend { display: flex; justify-content: center; gap: 20px; font-size: 14px; font-weight: bold; margin-bottom: 12px; }
         .legend-item { display: flex; align-items: center; gap: 6px; }
-        .legend-box { width: 16px; height: 16px; border-radius: 3px; display: inline-block; }
+        .legend-box { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
         
         .submit-btn { background: #198754; color: white; border: none; padding: 14px 20px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; }
         .submit-btn:hover { background: #157347; }
@@ -82,31 +82,31 @@
     let traineeData = {};
     let selectedQuestions = [];
 
-    // બે સ્પષ્ટ હાઈલાઈટ માર્કિંગ ધરાવતું નવીનતમ SVG ડ્રોઈંગ
-    function generateTwoMarkingsVernierSVG(totalValue) {
+    // બગ-ફ્રી અને ૧૦૦% વિઝિબલ SVG જનરેટર
+    function generateFixedVernierSVG(totalValue) {
         let val = parseFloat(totalValue);
         let mainScale = Math.floor(val);
-        let vernierDiv = Math.round((val - mainScale) * 50); // 0 થી 49 કાપા (LC 0.02 mm)
+        let vernierDiv = Math.round((val - mainScale) * 50); // 0 થી 49 (LC = 0.02mm)
 
-        let scaleFactor = 15; // 1 mm = 15px (ગ્રાફિક્સ ઝૂમ ક્લિયરિટી)
-        let startX = 40;
+        let scaleFactor = 13; // 1 mm = 13px
+        let startX = 50;
         let vernierZeroX = startX + (val * scaleFactor);
 
-        // ૧. મેઈન સ્કેલ ડ્રોઈંગ
+        // Main Scale Lines
         let mainScaleLines = '';
         for (let i = 0; i <= 45; i++) {
             let x = startX + (i * scaleFactor);
             let isTen = (i % 10 === 0);
             let isFive = (i % 5 === 0);
-            let h = isTen ? 32 : (isFive ? 22 : 14);
+            let h = isTen ? 30 : (isFive ? 20 : 13);
             
-            mainScaleLines += `<line x1="${x}" y1="65" x2="${x}" y2="${65 - h}" stroke="#ffffff" stroke-width="${isTen ? 2.2 : (isFive ? 1.8 : 1.2)}"/>`;
+            mainScaleLines += `<line x1="${x}" y1="75" x2="${x}" y2="${75 - h}" stroke="#ffffff" stroke-width="${isTen ? 2.2 : (isFive ? 1.8 : 1.2)}"/>`;
             if (isTen) {
-                mainScaleLines += `<text x="${x}" y="${65 - 36}" font-size="13" font-weight="bold" text-anchor="middle" fill="#38bdf8">${i}</text>`;
+                mainScaleLines += `<text x="${x}" y="${75 - 34}" font-size="12" font-weight="bold" text-anchor="middle" fill="#38bdf8">${i}</text>`;
             }
         }
 
-        // ૨. વર્નિયર સ્કેલ અને મેચિંગ લાઈન ગણતરી
+        // Vernier Scale Lines
         let vernierLines = '';
         let matchedX = 0;
 
@@ -114,61 +114,59 @@
             let vx = vernierZeroX + (i * 0.98 * scaleFactor);
             let isTen = (i % 10 === 0);
             let isFive = (i % 5 === 0);
-            let h = isTen ? 28 : (isFive ? 20 : 13);
+            let h = isTen ? 26 : (isFive ? 18 : 12);
 
             let isCoinciding = (i === vernierDiv);
             if (isCoinciding) {
-                matchedX = vx; // મેચ થતા કાપાની સ્થિતિ
+                matchedX = vx;
             }
 
-            // મેચિંગ કાપા માટે લીલો રંગ (Green Highlight)
             let lineColor = isCoinciding ? "#22c55e" : "#fbbf24";
             let lineWidth = isCoinciding ? 3 : (isTen ? 2 : 1.2);
 
-            vernierLines += `<line x1="${vx}" y1="75" x2="${vx}" y2="${75 + h}" stroke="${lineColor}" stroke-width="${lineWidth}"/>`;
+            vernierLines += `<line x1="${vx}" y1="85" x2="${vx}" y2="${85 + h}" stroke="${lineColor}" stroke-width="${lineWidth}"/>`;
             if (isTen) {
-                vernierLines += `<text x="${vx}" y="${75 + 42}" font-size="11" font-weight="bold" text-anchor="middle" fill="${isCoinciding ? '#22c55e' : '#a7f3d0'}">${i/5}</text>`;
+                vernierLines += `<text x="${vx}" y="${85 + 40}" font-size="11" font-weight="bold" text-anchor="middle" fill="${isCoinciding ? '#22c55e' : '#a7f3d0'}">${i/5}</text>`;
             }
         }
 
         return `
         <div class="vernier-box">
-            <!-- સમજૂતી માટે લેજન્ડ (સંકેત) -->
             <div class="legend">
-                <div class="legend-item"><span class="legend-box" style="background:#ef4444;"></span> <span style="color:#f87171;">૧. વર્નિયર ૦ પોઈન્ટર (મેઈન સ્કેલ રીડિંગ)</span></div>
+                <div class="legend-item"><span class="legend-box" style="background:#ef4444;"></span> <span style="color:#f87171;">૧. વર્નિયર ૦ પોઈન્ટર (મેઈન સ્કેલ)</span></div>
                 <div class="legend-item"><span class="legend-box" style="background:#22c55e;"></span> <span style="color:#4ade80;">૨. મેચિંગ કાપો (વર્નિયર ડિવિઝન)</span></div>
             </div>
 
-            <svg class="vernier-svg" viewBox="0 0 720 180" xmlns="http://www.w3.org/2000/svg">
+            <!-- viewBox માં Height 210px રાખી જેથી લખાણ કે કાપા કપાય નહીં -->
+            <svg class="vernier-svg" viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg">
                 <rect width="100%" height="100%" fill="#0f172a" rx="6"/>
                 
                 <!-- Main Beam -->
-                <rect x="15" y="15" width="690" height="55" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+                <rect x="20" y="25" width="680" height="55" fill="#1e293b" stroke="#475569" stroke-width="2"/>
                 ${mainScaleLines}
                 
                 <!-- Vernier Slider Plate -->
-                <rect x="${vernierZeroX - 25}" y="70" width="670" height="80" fill="#334155" stroke="#94a3b8" stroke-width="2" rx="4"/>
+                <rect x="${vernierZeroX - 20}" y="80" width="660" height="90" fill="#334155" stroke="#94a3b8" stroke-width="2" rx="4"/>
                 
-                <!-- માર્કિંગ ૧: વર્નિયર ૦ (ઝીરો) રેડ ઇન્ડિકેટર લાઈન -->
-                <line x1="${vernierZeroX}" y1="15" x2="${vernierZeroX}" y2="75" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="4,2"/>
-                <circle cx="${vernierZeroX}" cy="75" r="4" fill="#ef4444"/>
+                <!-- વર્નિયર ૦ (ઝીરો) રેડ ઇન્ડિકેટર લાઈન -->
+                <line x1="${vernierZeroX}" y1="25" x2="${vernierZeroX}" y2="85" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="4,2"/>
+                <circle cx="${vernierZeroX}" cy="85" r="4.5" fill="#ef4444"/>
                 
                 <!-- Vernier Scale Lines -->
                 ${vernierLines}
                 
-                <!-- માર્કિંગ ૨: મેચિંગ ડિવિઝન ગ્રીન ઇન્ડિકેટર લાઈન -->
-                <line x1="${matchedX}" y1="15" x2="${matchedX}" y2="125" stroke="#22c55e" stroke-width="2" stroke-dasharray="3,3"/>
-                <circle cx="${matchedX}" cy="65" r="4" fill="#22c55e"/>
-                <circle cx="${matchedX}" cy="75" r="4" fill="#22c55e"/>
+                <!-- મેચિંગ ડિવિઝન ગ્રીન ઇન્ડિકેટર લાઈન -->
+                <line x1="${matchedX}" y1="25" x2="${matchedX}" y2="135" stroke="#22c55e" stroke-width="2" stroke-dasharray="3,3"/>
+                <circle cx="${matchedX}" cy="75" r="4.5" fill="#22c55e"/>
+                <circle cx="${matchedX}" cy="85" r="4.5" fill="#22c55e"/>
             </svg>
         </div>`;
     }
 
-    // ૧૦ રેન્ડમ પ્રશ્નો જનરેટ કરવા માટે
     function generateQuestions() {
         let questions = [];
         for (let i = 0; i < 40; i++) {
-            let mainScale = Math.floor(Math.random() * 28);
+            let mainScale = Math.floor(Math.random() * 26);
             let vernierDiv = Math.floor(Math.random() * 50);
             
             let totalReading = (mainScale + (vernierDiv * 0.02)).toFixed(2);
@@ -206,7 +204,7 @@
             const qDiv = document.createElement('div');
             qDiv.className = 'question-card';
             
-            const svgCode = generateTwoMarkingsVernierSVG(q.correctAnswer);
+            const svgCode = generateFixedVernierSVG(q.correctAnswer);
             
             qDiv.innerHTML = `
                 <div class="question-title">પ્રશ્ન ${index + 1}: આકૃતિમાં દર્શાવેલ વર્નિયર કેલિપરનું સાચું રીડિંગ શોધો (mm માં)</div>
@@ -260,7 +258,7 @@
             const reviewCard = document.createElement('div');
             reviewCard.className = `review-card ${isCorrect ? 'correct' : 'incorrect'}`;
             
-            const svgCode = generateTwoMarkingsVernierSVG(q.correctAnswer);
+            const svgCode = generateFixedVernierSVG(q.correctAnswer);
             let vernierValue = (q.vernierDiv * 0.02).toFixed(2);
 
             reviewCard.innerHTML = `
